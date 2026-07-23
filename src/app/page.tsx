@@ -1,5 +1,4 @@
 'use client'
-
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ElementType } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -68,16 +67,13 @@ function Header() {
     savedEpisodes,
   } = useAppStore()
   const inputRef = useRef<HTMLInputElement>(null)
-
   useEffect(() => {
     if (isSearchOpen) inputRef.current?.focus()
   }, [isSearchOpen])
-
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
     setSearchResults(searchEpisodes(query))
   }, [setSearchQuery, setSearchResults])
-
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-lg">
       <div className="mx-auto flex h-14 max-w-[1080px] items-center justify-between px-5 sm:px-7">
@@ -85,7 +81,6 @@ function Header() {
           <Image src="/brand/logo-mark.svg" alt="نماء" width={35} height={35} priority />
           <span className="text-[21px] font-extrabold tracking-tight text-foreground">نماء</span>
         </button>
-
         <AnimatePresence>
           {isSearchOpen && (
             <motion.div
@@ -118,7 +113,6 @@ function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-
         {!isSearchOpen && (
           <div className="flex items-center gap-0.5">
             {view !== 'home' && (
@@ -168,7 +162,6 @@ function EpisodeArtwork({ episode, compact = false }: { episode: EpisodeBasic; c
       </div>
     )
   }
-
   return (
     <div className={`relative h-[148px] overflow-hidden bg-gradient-to-br ${episodeTone(episode)}`}>
       <BookOpen className="absolute left-1/2 top-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-white/[0.35]" strokeWidth={2.1} />
@@ -180,7 +173,6 @@ function EpisodeArtwork({ episode, compact = false }: { episode: EpisodeBasic; c
 function EpisodeCard({ episode, compact = false, wide = false }: { episode: EpisodeBasic; compact?: boolean; wide?: boolean }) {
   const { selectEpisode, savedEpisodes, toggleSave } = useAppStore()
   const isSaved = savedEpisodes.includes(episode.id)
-
   return (
     <motion.article
       whileHover={{ y: -2 }}
@@ -347,10 +339,51 @@ function PlayerControls({ large = false }: { large?: boolean }) {
 }
 
 function MiniPlayer() {
-  const { selectedEpisode, selectEpisode, isPlaying, progress, playbackRate, setProgress, setPlaying, skipPlayback, togglePlayback } = useAppStore()
+  const { selectedEpisode, selectEpisode, isPlaying, progress, playbackRate, setProgress, setPlaying, skipPlayback, togglePlayback, isMuted } = useAppStore()
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUrl = (selectedEpisode as any)?.audioUrl as string | undefined
+
+  // Real audio handling
+  useEffect(() => {
+    if (!audioUrl || !audioRef.current) return
+    const audio = audioRef.current
+    audio.playbackRate = playbackRate
+    audio.muted = isMuted
+  }, [audioUrl, playbackRate, isMuted])
 
   useEffect(() => {
-    if (!selectedEpisode || !isPlaying) return
+    if (!audioUrl || !audioRef.current) return
+    const audio = audioRef.current
+    if (isPlaying) {
+      audio.play().catch(() => setPlaying(false))
+    } else {
+      audio.pause()
+    }
+  }, [isPlaying, audioUrl, setPlaying])
+
+  useEffect(() => {
+    if (!audioUrl || !audioRef.current) return
+    const audio = audioRef.current
+    const onTimeUpdate = () => {
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100)
+      }
+    }
+    const onEnded = () => {
+      setProgress(100)
+      setPlaying(false)
+    }
+    audio.addEventListener('timeupdate', onTimeUpdate)
+    audio.addEventListener('ended', onEnded)
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate)
+      audio.removeEventListener('ended', onEnded)
+    }
+  }, [audioUrl, setProgress, setPlaying])
+
+  // Simulation fallback for episodes without audio
+  useEffect(() => {
+    if (audioUrl || !selectedEpisode || !isPlaying) return
     const timer = window.setInterval(() => {
       const durationSeconds = selectedEpisode.duration * 60
       const simulatedSeconds = 15 * playbackRate
@@ -363,26 +396,35 @@ function MiniPlayer() {
       }
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [selectedEpisode, isPlaying, playbackRate, progress, setProgress, setPlaying])
+  }, [selectedEpisode, isPlaying, playbackRate, progress, setProgress, setPlaying, audioUrl])
 
   if (!selectedEpisode) return null
+
   return (
-    <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 shadow-2xl backdrop-blur-xl">
-      <div className="h-1 bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-        <button type="button" onClick={() => selectEpisode(selectedEpisode)} className="flex min-w-0 flex-1 items-center gap-3 text-right">
-          <div className="relative size-11 shrink-0 overflow-hidden rounded-xl"><Image src={selectedEpisode.coverImage} alt="" fill className="object-cover" unoptimized /></div>
-          <div className="min-w-0"><p className="truncate text-sm font-bold">{selectedEpisode.title}</p><p className="truncate text-xs text-muted-foreground">محاكاة تشغيل • {selectedEpisode.author}</p></div>
-        </button>
-        <div className="flex items-center gap-1.5">
-          <Button type="button" variant="ghost" size="icon" onClick={() => skipPlayback(-15)} aria-label="رجوع 15 ثانية"><SkipBack className="size-4" /></Button>
-          <Button type="button" size="icon" onClick={togglePlayback} className="size-11 rounded-full bg-primary text-primary-foreground hover:bg-primary/90" aria-label={isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}>
-            {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
-          </Button>
-          <Button type="button" variant="ghost" size="icon" onClick={() => skipPlayback(15)} aria-label="تقديم 15 ثانية"><SkipForward className="size-4" /></Button>
+    <>
+      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" />}
+      <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 shadow-2xl backdrop-blur-xl">
+        <div className="h-1 bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>
+        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <button type="button" onClick={() => selectEpisode(selectedEpisode)} className="flex min-w-0 flex-1 items-center gap-3 text-right">
+            <div className="relative size-11 shrink-0 overflow-hidden rounded-xl"><Image src={selectedEpisode.coverImage} alt="" fill className="object-cover" unoptimized /></div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{selectedEpisode.title}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {audioUrl ? 'صوت حقيقي' : 'محاكاة تشغيل'} • {selectedEpisode.author}
+              </p>
+            </div>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <Button type="button" variant="ghost" size="icon" onClick={() => skipPlayback(-15)} aria-label="رجوع 15 ثانية"><SkipBack className="size-4" /></Button>
+            <Button type="button" size="icon" onClick={togglePlayback} className="size-11 rounded-full bg-primary text-primary-foreground hover:bg-primary/90" aria-label={isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}>
+              {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={() => skipPlayback(15)} aria-label="تقديم 15 ثانية"><SkipForward className="size-4" /></Button>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   )
 }
 
@@ -391,7 +433,7 @@ function EpisodeDetail() {
   const [showFullDescription, setShowFullDescription] = useState(false)
   if (!selectedEpisode) return null
   const isSaved = savedEpisodes.includes(selectedEpisode.id)
-
+  const hasRealAudio = !!(selectedEpisode as any).audioUrl
   return (
     <motion.div initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}>
       <button type="button" onClick={goHome} className="mb-6 flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowRight className="size-4" />العودة للرئيسية</button>
@@ -409,23 +451,27 @@ function EpisodeDetail() {
               </button>
             </div>
           </div>
-
           <div className="rounded-3xl border border-primary/15 bg-card p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between gap-4">
-              <div><p className="font-bold">مشغل الحلقة التجريبي</p><p className="mt-1 text-xs text-muted-foreground">لا يوجد ملف صوت في هذه النسخة؛ عناصر التحكم تعمل كمحاكاة بصرية.</p></div>
+              <div>
+                <p className="font-bold">مشغل الحلقة</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {hasRealAudio
+                    ? 'ملف صوت حقيقي مرتبط بهذه الحلقة.'
+                    : 'لا يوجد ملف صوت في هذه النسخة؛ عناصر التحكم تعمل كمحاكاة بصرية.'}
+                </p>
+              </div>
               <button type="button" onClick={() => toggleSave(selectedEpisode.id)} className="grid size-10 place-items-center rounded-full border border-border text-muted-foreground hover:text-primary" aria-label="حفظ الحلقة">
                 {isSaved ? <BookmarkCheck className="size-5 text-primary" /> : <Bookmark className="size-5" />}
               </button>
             </div>
             <PlayerControls large />
           </div>
-
           <div className="rounded-3xl border border-border/70 bg-card p-6">
             <h2 className="mb-4 text-lg font-extrabold">عن الحلقة</h2>
             <p className="text-sm leading-8 text-muted-foreground">{selectedEpisode.description}</p>
           </div>
         </div>
-
         <aside className="space-y-4">
           {selectedEpisode.mainIdea && <InfoCard icon={Lightbulb} title="الفكرة الرئيسية" text={selectedEpisode.mainIdea} tone="primary" />}
           {selectedEpisode.targetAudience && <InfoCard icon={Users} title="مناسب لك إذا…" text={selectedEpisode.targetAudience} />}
@@ -571,7 +617,6 @@ function HomeView() {
 export default function PlatformPage() {
   const { view, savedEpisodes, setSavedEpisodes, selectedEpisode } = useAppStore()
   const hydrated = useRef(false)
-
   useEffect(() => {
     const stored = window.localStorage.getItem('namaa-demo-saved')
     if (stored) {
@@ -579,11 +624,9 @@ export default function PlatformPage() {
     }
     hydrated.current = true
   }, [setSavedEpisodes])
-
   useEffect(() => {
     if (hydrated.current) window.localStorage.setItem('namaa-demo-saved', JSON.stringify(savedEpisodes))
   }, [savedEpisodes])
-
   const content = useMemo(() => {
     if (view === 'episode') return <EpisodeDetail key="episode" />
     if (view === 'category') return <CategoryView key="category" />
@@ -592,7 +635,6 @@ export default function PlatformPage() {
     if (view === 'saved') return <SavedView key="saved" />
     return <HomeView key="home" />
   }, [view])
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />

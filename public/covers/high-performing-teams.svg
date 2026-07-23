@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="900" viewBox="0 0 700 900">
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#154360"/><stop offset="1" stop-color="#081E1C"/></linearGradient>
+  <radialGradient id="r"><stop stop-color="#C8A46D" stop-opacity=".32"/><stop offset="1" stop-color="#C8A46D" stop-opacity="0"/></radialGradient>
+  <style>.title{font-family:Tahoma,Arial,sans-serif;font-size:48px;font-weight:700;fill:#fff;text-anchor:middle;direction:rtl;unicode-bidi:bidi-override}.small{font-family:Tahoma,Arial,sans-serif;fill:#F3E8D6;text-anchor:middle;direction:rtl;unicode-bidi:bidi-override}</style>
+</defs>
+<rect width="700" height="900" rx="42" fill="url(#g)"/>
+<circle cx="100" cy="90" r="260" fill="url(#r)"/><circle cx="630" cy="750" r="300" fill="url(#r)"/>
+<g transform="translate(52 55)">
+  <path d="M40 56C19 45 8 25 8 4c24 2 42 14 51 35 9-21 27-33 51-35 0 21-11 41-32 52-8 4-14 10-19 18-5-8-11-14-19-18Z" fill="#7BA89E"/>
+  <path d="M59 73v42" stroke="#C8A46D" stroke-width="8" stroke-linecap="round"/>
+  <path d="M10 92c22-7 39-2 49 14 10-16 27-21 49-14v37c-21-8-38-4-49 10-11-14-28-18-49-10Z" fill="none" stroke="#F3E8D6" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M0 82v45M118 82v45" stroke="#C8A46D" stroke-width="5" stroke-linecap="round"/>
+</g>
+<text x="635" y="95" class="small" font-size="26" font-weight="700">نماء</text>
+<rect x="205" y="160" width="290" height="48" rx="24" fill="#F3E8D6" fill-opacity=".13" stroke="#F3E8D6" stroke-opacity=".25"/>
+<text x="350" y="193" class="small" font-size="22">إدارة وقيادة</text>
+<text x="350" y="315" class="title">بناء فرق عالية الأداء:</text>
+<text x="350" y="387" class="title">من المجموعة إلى الفريق</text>
+<text x="350" y="690" class="small" font-size="27" fill-opacity=".78">باتريك لينسيوني</text>
+<g transform="translate(180 770)"><rect width="340" height="72" rx="36" fill="#F3E8D6" fill-opacity=".12" stroke="#C8A46D"/><circle cx="50" cy="36" r="22" fill="#C8A46D"/><path d="M44 25l18 11-18 11Z" fill="#0F3D3A"/><text x="205" y="46" class="small" font-size="24">حلقة مسموعة • 24 دقيقة</text></g>
+</svg>

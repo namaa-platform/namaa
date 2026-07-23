@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  icon        String?   // lucide icon name
+  order       Int       @default(0)
+  episodes    Episode[]
+  createdAt   DateTime  @default(now())
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  episodes Episode[]
+}
+
+model Episode {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  author        String
+  authorOriginal String? // اسم المؤلف الأصلي بالإنجليزي
+  duration      Int      // بالدقائق
+  description   String   // وصف مختصر
+  fullContent   String?  // المحتوى الكامل للمقال
+  mainIdea      String?  // الفكرة الرئيسية
+  targetAudience String? // لمن هذا الكتاب
+  whatYouLearn  String?  // ستتعلم
+  applyAfter    String?  // طبق بعد الحلقة
+  listenNext    String?  // استمع بعده
+  level         String   @default("مبتدئ") // مبتدئ، متوسط، متقدم
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  tags          Tag[]
+  pathId        String?
+  path          LearningPath? @relation(fields: [pathId], references: [id])
+  pathOrder     Int?     // ترتيب الحلقة داخل المسار
+  isFeatured    Boolean  @default(false) // اختيار اليوم
+  isNew         Boolean  @default(false) // جديد هذا الأسبوع
+  listenCount   Int      @default(0) // عدد مرات الاستماع
+  completeCount Int      @default(0) // عدد مرات الإكمال
+  saveCount     Int      @default(0) // عدد مرات الحفظ
+  coverColor    String   @default("#1a1a2e") // لون الغلاف
+  publishedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LearningPath {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String
+  icon        String?   // lucide icon name
+  episodeCount Int      @default(0)
+ episodes    Episode[]
+  createdAt   DateTime  @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

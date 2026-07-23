@@ -51,6 +51,7 @@ export interface EpisodeBasic {
   category: Category
   tags: Tag[]
   path?: LearningPathMeta | null
+  audioUrl?: string
 }
 
 export interface LearningPath extends LearningPathMeta {
